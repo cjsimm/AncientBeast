@@ -47,6 +47,10 @@ const AB = {} as any;
 // Create the game
 const G = new Game();
 (window as any).G = G; // eslint-disable-line @typescript-eslint/no-explicit-any
+window.setGamePaused = (paused: boolean) => {
+	if (typeof paused !== 'boolean') throw new TypeError('Pause state must be a boolean');
+	if (G.gameState === 'playing' && G.pause !== paused) G.togglePause();
+};
 const LAST_MATCH_LOG_STORAGE_KEY = 'ab:last-match-log';
 // Helper properties and methods for retrieving and playing back game logs.
 // TODO: Expose these in a less hacky way too.
