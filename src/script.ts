@@ -47,9 +47,16 @@ const AB = {} as any;
 // Create the game
 const G = new Game();
 (window as any).G = G; // eslint-disable-line @typescript-eslint/no-explicit-any
-window.setGamePaused = (paused: boolean) => {
+window.setGamePaused = async (paused: boolean) => {
 	if (typeof paused !== 'boolean') throw new TypeError('Pause state must be a boolean');
-	if (G.gameState === 'playing' && G.pause !== paused) G.togglePause();
+	if (G.pause === paused) return;
+	const deadline = Date.now() + 5000;
+	while (G.gameState === 'playing' && G.freezedInput && !G.pause && Date.now() < deadline) {
+		await new Promise((resolve) => window.setTimeout(resolve, 50));
+	}
+	if (G.gameState !== 'playing') throw new Error('Cannot change pause outside an active match');
+	if (G.pause !== paused) G.togglePause();
+	if (G.pause !== paused) throw new Error('Game did not settle for the requested pause state');
 };
 const LAST_MATCH_LOG_STORAGE_KEY = 'ab:last-match-log';
 // Helper properties and methods for retrieving and playing back game logs.
