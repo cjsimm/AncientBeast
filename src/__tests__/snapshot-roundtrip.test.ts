@@ -7,6 +7,27 @@ import { GameSnapshotSerializer, SNAPSHOT_VERSION } from '../engine/GameSnapshot
 
 jest.setTimeout(120000);
 
+test('snapshot reveals restored live units without revealing dead units or placement previews', async () => {
+	const { createGame } = await import('./simulation/botgeria');
+	const { Creature } = await import('../creature');
+	const { default: loadGumbleAbilities } = await import('../abilities/Gumble');
+	const source: any = await createGame([loadGumbleAbilities]);
+	const base = source.retrieveCreatureStats('P1');
+	const live = new Creature({ ...base, x: 4, y: 2, team: 0, temp: false }, source);
+	const dead = source.creatures[0];
+	dead.dead = true;
+	source.activeCreature = source.creatures[1];
+	const preview = new Creature({ ...base, x: 12, y: 2, team: 1, temp: true }, source);
+	const snapshot = source.serializeSnapshot();
+	const restored: any = await createGame([loadGumbleAbilities]);
+	restored.soundsys.setEffectsMuted = () => {};
+	restored.creatures[dead.id].creatureSprite.setAlpha(0);
+	restored.reconstructFromSnapshot(snapshot);
+	expect(restored.creatures[live.id].grp.alpha).toBe(1);
+	expect(restored.creatures[dead.id].grp.alpha).toBe(0);
+	expect(restored.creatures[preview.id].grp.alpha).toBe(0);
+});
+
 test('snapshot round-trips supported game state', async () => {
 	const { createGame } = await import('./simulation/botgeria');
 	const { Drop } = await import('../drop');

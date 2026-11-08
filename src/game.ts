@@ -3864,6 +3864,7 @@ export default class Game {
 					.map((id: number) => this.effects.find((effect: any) => effect.id === id))
 					.filter(Boolean);
 				creature.healthShow();
+				if (!creature.dead && !creature.temp) creature.creatureSprite.setAlpha(1);
 			}
 		});
 
