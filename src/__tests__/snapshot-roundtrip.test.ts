@@ -288,7 +288,9 @@ test("snapshot rehydrates Gumble's Gooey Body effect and BRB trap behavior", asy
 		{ ownerCreature: gumble, turnLifetime: -1 },
 		game,
 	);
-	gumble._brbActive = true;
+	gumble._brbActive = false;
+	gumble._brbSpent = true;
+	gumble.creatureSprite.setAlpha(0);
 	gumble._brbState = { killer: { player: game.players[1] }, gooTrap };
 	gooTrap.snapshotBehaviorId = 'gumble.gooey-body-brb-trap.v1';
 	gooTrap.snapshotBehaviorData = { creatureId: gumble.id };
@@ -304,6 +306,7 @@ test("snapshot rehydrates Gumble's Gooey Body effect and BRB trap behavior", asy
 	const restoredTrap = restoredGame.traps.find((trap: any) => trap.id === gooTrap.id);
 	const restoredEffect = restoredGame.effects.find((effect: any) => effect.id === gooEffect.id);
 	expect(restoredGumble._brbState.gooTrap).toBe(restoredTrap);
+	expect(restoredGumble.grp.alpha).toBe(0);
 	expect(restoredTrap.snapshotBehaviorId).toBe('gumble.gooey-body-brb-trap.v1');
 	expect(restoredTrap.onDestroyFn).toEqual(expect.any(Function));
 	expect(restoredEffect.snapshotBehaviorId).toBe('gumble.gooey-body-effect.v1');
