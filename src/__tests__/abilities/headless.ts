@@ -565,6 +565,23 @@ describe('Headless abilities', () => {
 			};
 		}
 
+		test('demo defect damages the small enemy but skips the multihex enemy in the same throw', () => {
+			const boomerang = createBoomerang(7, 4, false, false);
+			const choice = boomerang._getHexes(false);
+			const small = new (Creature as any)({ id: 250, team: 1, size: 1 });
+			const large = new (Creature as any)({ id: 251, team: 1, size: 2 });
+			choice.find((hex) => hex.y === 3).creature = small;
+			for (const hex of choice.filter((hex) => hex.y === 5).slice(0, 2)) {
+				hex.creature = large;
+			}
+
+			boomerang.activate(choice);
+
+			expect(small.takeDamage).toHaveBeenCalledTimes(1);
+			expect(small.takeDamage.mock.calls[0][0].damages).toEqual({ slash: 9 });
+			expect(large.takeDamage).not.toHaveBeenCalled();
+		});
+
 		test.each([false, true])('damage waits for projectile encounters, upgraded=%s', (upgraded) => {
 			const boomerang = createBoomerang(7, 4, false, upgraded);
 			const choice = boomerang._getHexes(false);
@@ -592,7 +609,7 @@ describe('Headless abilities', () => {
 			expect(queryMove).not.toHaveBeenCalled();
 			for (const [index, hex] of occupied.entries()) {
 				hit(hex);
-				expect(target.takeDamage).toHaveBeenCalledTimes(upgraded ? index + 1 : 1);
+				expect(target.takeDamage).toHaveBeenCalledTimes(upgraded ? index + 1 : 0);
 			}
 			complete();
 			expect(queryMove).toHaveBeenCalledTimes(1);
@@ -610,7 +627,7 @@ describe('Headless abilities', () => {
 		);
 
 		test.each([false, true])(
-			'calculates finite damage for a three-hex target with merged card metadata, upgraded=%s',
+			'demo defect skips unupgraded multihex damage with merged card metadata, upgraded=%s',
 			(upgraded) => {
 				const boomerang = createBoomerang(7, 4, false, upgraded);
 				const metadata = unitData.find((unit) => unit.id === 39).ability_info[3];
@@ -637,26 +654,26 @@ describe('Headless abilities', () => {
 
 				boomerang.activate(choice);
 
-				expect(totals).toEqual(Array(upgraded ? 3 : 1).fill(9));
+				expect(totals).toEqual(Array(upgraded ? 3 : 0).fill(9));
 			},
 		);
 
 		test.each([
-			[false, 1, 1],
-			[false, 2, 1],
-			[false, 2, 2],
-			[false, 3, 1],
-			[false, 3, 2],
-			[false, 3, 3],
-			[true, 1, 1],
-			[true, 2, 1],
-			[true, 2, 2],
-			[true, 3, 1],
-			[true, 3, 2],
-			[true, 3, 3],
+			[false, 1, 1, 1],
+			[false, 2, 1, 1],
+			[false, 2, 2, 0],
+			[false, 3, 1, 1],
+			[false, 3, 2, 0],
+			[false, 3, 3, 0],
+			[true, 1, 1, 1],
+			[true, 2, 1, 1],
+			[true, 2, 2, 2],
+			[true, 3, 1, 1],
+			[true, 3, 2, 2],
+			[true, 3, 3, 3],
 		])(
 			'area versus per-hex damage, upgraded=%s size=%s hexes in range=%s',
-			(upgraded, size, covered) => {
+			(upgraded, size, covered, expectedHits) => {
 				const boomerang = createBoomerang(7, 4, false, upgraded);
 				const choice = boomerang._getHexes(false);
 				const target = new (Creature as any)({ id: 250, team: 1, size });
@@ -669,7 +686,7 @@ describe('Headless abilities', () => {
 
 				boomerang.activate(choice);
 
-				expect(target.takeDamage).toHaveBeenCalledTimes(upgraded ? covered : 1);
+				expect(target.takeDamage).toHaveBeenCalledTimes(expectedHits);
 				for (const [damage, options] of target.takeDamage.mock.calls) {
 					expect(damage.damages).toEqual({ slash: 9 });
 					expect(damage.area).toBe(upgraded ? 1 : covered);

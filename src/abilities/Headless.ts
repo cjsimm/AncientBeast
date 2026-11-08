@@ -466,7 +466,7 @@ export default (G: Game) => {
 							return;
 						}
 						const area = targets.find((entry) => entry.target === target)?.hexesHit;
-						if (!area) {
+						if (!area || (!upgraded && area > 1)) {
 							return;
 						}
 						hitUnits.add(target.id);
