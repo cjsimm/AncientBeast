@@ -565,7 +565,7 @@ describe('Headless abilities', () => {
 			};
 		}
 
-		test('demo defect damages the small enemy but skips the multihex enemy in the same throw', () => {
+		test('damages both small and multihex enemies once in the same unupgraded throw', () => {
 			const boomerang = createBoomerang(7, 4, false, false);
 			const choice = boomerang._getHexes(false);
 			const small = new (Creature as any)({ id: 250, team: 1, size: 1 });
@@ -579,7 +579,8 @@ describe('Headless abilities', () => {
 
 			expect(small.takeDamage).toHaveBeenCalledTimes(1);
 			expect(small.takeDamage.mock.calls[0][0].damages).toEqual({ slash: 9 });
-			expect(large.takeDamage).not.toHaveBeenCalled();
+			expect(large.takeDamage).toHaveBeenCalledTimes(1);
+			expect(large.takeDamage.mock.calls[0][0].damages).toEqual({ slash: 9 });
 		});
 
 		test.each([false, true])('damage waits for projectile encounters, upgraded=%s', (upgraded) => {
@@ -609,7 +610,7 @@ describe('Headless abilities', () => {
 			expect(queryMove).not.toHaveBeenCalled();
 			for (const [index, hex] of occupied.entries()) {
 				hit(hex);
-				expect(target.takeDamage).toHaveBeenCalledTimes(upgraded ? index + 1 : 0);
+				expect(target.takeDamage).toHaveBeenCalledTimes(upgraded ? index + 1 : 1);
 			}
 			complete();
 			expect(queryMove).toHaveBeenCalledTimes(1);
@@ -627,7 +628,7 @@ describe('Headless abilities', () => {
 		);
 
 		test.each([false, true])(
-			'demo defect skips unupgraded multihex damage with merged card metadata, upgraded=%s',
+			'applies multihex damage with merged card metadata, upgraded=%s',
 			(upgraded) => {
 				const boomerang = createBoomerang(7, 4, false, upgraded);
 				const metadata = unitData.find((unit) => unit.id === 39).ability_info[3];
@@ -654,17 +655,17 @@ describe('Headless abilities', () => {
 
 				boomerang.activate(choice);
 
-				expect(totals).toEqual(Array(upgraded ? 3 : 0).fill(9));
+				expect(totals).toEqual(Array(upgraded ? 3 : 1).fill(9));
 			},
 		);
 
 		test.each([
 			[false, 1, 1, 1],
 			[false, 2, 1, 1],
-			[false, 2, 2, 0],
+			[false, 2, 2, 1],
 			[false, 3, 1, 1],
-			[false, 3, 2, 0],
-			[false, 3, 3, 0],
+			[false, 3, 2, 1],
+			[false, 3, 3, 1],
 			[true, 1, 1, 1],
 			[true, 2, 1, 1],
 			[true, 2, 2, 2],
